@@ -1,2 +1,2 @@
 # Resources
-Handy resources and tools for daily routines
+Handy resources and tools for the day-to-day activities
