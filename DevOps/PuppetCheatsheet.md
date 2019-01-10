@@ -1,15 +1,12 @@
 # Puppet Cheatsheet
-***
 
 ## Overview
----
 
 Puppet works on the client-server model. The server is used to distribute information to the nodes to ensure that node configurations are consistent. 
 
 Puppet is a stand alone application. In the events that the nodes lose contact with the master for a longer period of time, they do cache last known good configuration, they will continue to apply configuration until they communicate again with master.
 
 ## Installation
----
 
 ### Puppet master 
 
@@ -104,8 +101,7 @@ Aagent installation:
 curl -k https://linux4vuppala2.mylabserver.com:8140/packages/current/install.bash | sudo bash
 ```
 
-##Puppet configuration and log files
----
+## Puppet configuration and log files
 
 Puppet configuration file:
 
@@ -161,22 +157,80 @@ Environment config file:
 /etc/puppetlabs/code/environments/production/environment.conf
 ```
 
-##Puppet Server
----
+## Puppet Server
+
+Apply a manifest:
+
+````
+puppet apply -l /tmp/manifest.log manifest.pp
+puppet apply --modulepath=/root/dev/modules -e "include ntpd::server"
+puppet apply --catalog catalog.json
+````
+
+Validate the default site manifest at /etc/puppetlabs/puppet/manifests/site.pp:
+````
+puppet parser validate
+````
+
+Validate two arbitrary manifest files:
+
+````
+puppet parser validate init.pp vhost.pp
+````
+
+Validate form STDIN
+
+````
+cat init.pp | puppet parser validate
+````
 
 Manage certificates in Puppet Master:
 
 ```
-puppet cert list
-puppet cert list --all
-puppet cert sign <name>
-puppet cert sign --all
-puppet cert clean <name> # removes cert
+puppet cert list           # lists available nodes to sign
+puppet cert list --all     # lists all signed nodes
+puppet cert sign <name>    # manually sign specific node
+puppet cert sign --all     # sign all nodes
+puppet cert clean <name>   # removes cert
 ```
 
+Delete the setting 'setting_name' from the 'main' configuration domain:
 
-##Puppet agent
----
+````
+puppet config delete setting_name
+````
+
+Delete the setting 'setting_name' from the 'master' configuration domain:
+
+````
+puppet config delete setting_name --section master
+````
+
+Get puppet's runfile directory:
+
+````
+puppet config print rundir
+````
+
+Get a list of important directories from the master's config:
+
+````
+puppet config print all --section master | grep -E "(path|dir)"
+````
+
+Set puppet's runfile directory:
+
+````
+puppet config set rundir /var/run/puppetlabs
+````
+
+Set the vardir for only the agent:
+
+````
+puppet config set vardir /opt/puppetlabs/puppet/cache --section agent
+````
+
+## Puppet agent
 
 Apply a catalog on Puppet agent (bootstrap):
 
@@ -195,26 +249,15 @@ puppet agent --disable <info message> # Only recent versions
 puppet agent --enable
 ```
 
-Show all installed packages:
+Manage resources
 
 ```
-puppet resource package
+puppet resource                                # Show all managed resources
+puppet resource package apache ensure=present  # Install package
+puppet resource package apache ensure=present  # Remove package
 ```
 
-Install or remove package:
-
-```
-puppet resource package apache ensure=present/absent
-```
-
-Show all managed resources
-
-```
-puppet resource
-```
-
-##Modules
----
+## Modules
 
 Print modulepath:
 
@@ -228,20 +271,15 @@ Modules help:
 puppet help module
 ```
 
-Search available modules: (PuppetForge)
-
-```
-puppet module search 'nginx'
-```
-
 Manage modules in Puppet master
 
 ```
-puppet module list
-puppet module install <name>
-puppet module uninstall <name>
-puppet module upgrade <name>
-puppet module changes
+puppet module list              # lists current installed modules
+puppet module install <name>    # downloads/installs modules from http://forge.puppetlabs.com
+puppet module uninstall <name>  # removes/deletes module
+puppet module upgrade <name>    # upgrades to new version of module
+puppet module search <name>     # search modules from http://forge.puppetlabs.com
+puppet module changes           # lists last changes in modules
 ```
 
 Build new module with full skeleton:
@@ -284,8 +322,7 @@ source => 'puppet:///modules/mysql/my.cnf'
 File is in: $modulepath/mysql/files/my.cnf
 ```
 
-##Facter
----
+## Facter
 
 Show all facts
 
@@ -328,4 +365,301 @@ Use fact inside manifest directly
 
 ````
 notify { "OS is $::operatingsystem": } 
+````
+
+## Puppet DSL
+
+Declare a resource:
+
+````
+type { 'title':
+  param => 'value',
+}
+````
+
+Define a class:
+
+````
+class <name> (
+  DataType $param1,           # this parameter must be provided upon declaration
+  DataType $param2 = 'value',
+) {
+  # Puppet DSL code
+}
+````
+
+Import a class
+
+````
+include <name>  # no ordering, the mentioned class will be somewhere in the catalog
+require <name>  # strict ordering, the class must be finished prior continuing
+contain <name>  # local ordering, the class must be finished within the class where the contain function is used
+````
+
+Define a class as resource type:
+
+````
+class { '<name>':
+  param1 => 'value',
+}
+````
+
+Self define resource type
+
+````
+define <name> (
+  DataType $param1,
+  DataType $param2 = 'value',
+){
+  # Puppet DSL
+  # all resource type declaration must use the $title variable
+  # older Puppet code uses $name instead of $title
+}
+````
+
+Declare self define resource
+
+````
+<name> { 'title':
+  param1 => 'value',
+}
+````
+
+## Puppet control statements
+
+Variable
+````
+$content = "some content\n" 
+````
+
+Array
+````
+$address = [$addr1, $addr2, $addr3]
+````
+
+Hash
+````
+$warning_msg = { memory => "memory low",
+ disk => "disk space low"
+ }
+notify { $warning_msg[disk]: }
+````
+
+Complex Hash
+
+````
+$services = {
+  "apache" => {
+    "version" => "2.8",
+    "desc" => "web server"
+  },
+  "mysql" => {
+    "version" => "5.6",
+    "desc" => "web server"
+  }
+}
+````
+
+Case
+
+````
+case $test_variable {
+  'value1': {         # specific value
+    # Puppet DSL
+  }
+  /regexp/: {         # regular expression
+    # Puppet DSL
+  }
+  'value2', 'value3': {  # multiple values
+    # Puppet DSL
+  }
+  default: {          # fall back value - optional
+    # optional, Puppet DSL
+  }
+}
+````
+
+If
+````
+if $test_variable {
+  # Puppet DSL
+} else {  # else is optional
+  # Puppet DSL
+}
+
+if $test_variable == 'content' {
+  # Puppet DSL
+}
+
+if $test_variable =~ /regexp/ {
+  # Puppet DSL
+}
+````
+
+Selector
+
+````
+$result_var = $test_var ? {
+  'value1' => 'return_val1',
+  'value2' => 'return_val2',
+  default  => 'return_val3',
+}
+````
+
+Iterate over array
+````
+$var = [ 'element1', 'element2' ]
+$var.each |DataType $key| {
+  type { $key:
+    param => 'value',
+  }
+}
+````
+
+Iterate over hash
+````
+$var = {
+  'key1' => {
+    'var1' => 'val1',
+    'var2' => 'val2',
+  },
+  'key2' => {
+    'var1' => 'val1',
+  },
+}
+
+$var.each |DataType $key, DataType $val| {
+  type { $key:
+    * => $val,
+}
+````
+
+## Hiera
+
+Functions:
+
+````
+hiera() 
+hiera_array() 
+hiera_hash() 
+hiera_include() 
+````
+
+Hiera arrays:
+
+````
+hiera ssh_users ["root", "jeff", "gary", "hunter"] 
+hiera ssh_users.0 
+root
+````
+
+Hiera hash
+
+````
+$ hiera user {"name"=>"kim", "home"=>"/home/kim"} 
+$ hiera user.name 
+kim 
+````
+
+Use Hiera for class assignment in Site.pp 
+
+````
+hiera_include() 
+````
+
+Hiera config file 
+
+````
+/etc/puppetlabs/puppet/hiera.yaml 
+````
+
+Hierarchies: 
+
+````
+:hierarchy: 
+   - "nodes/%{::clientcert}" 
+   - "roles/%{::role}" 
+   - "%{::osfamily}" 
+   - "%{::environment}" 
+   - common 
+````
+
+Lookup wiht puppet command:
+
+````
+puppet lookup profile::hiera_test::backups_enabled --environment production --node jenkins-prod-03.example.com
+````
+
+Query
+
+````
+hiera <key>                                      # to query common.yaml only
+hiera <key> -m <FQDN>                            # to query config of a given node (using mcollective)
+hiera <key> -i <FQDN>                            # to query config of a given node (using Puppet inventory)
+hiera <key> environment=production fqdn=myhost1  # to pass values for hiera.yaml
+````
+
+To dump complex data:
+
+````
+hiera -a <array key>
+hiera -h <hash key>
+````
+
+## Resource ordering
+
+Require and subscribe
+
+````
+package { 'foo':
+  ensure => present,
+}
+file { '/etc/foo/foo.conf':
+  ensure  => file,
+  require => Package['foo'],
+}
+service { 'foo':
+  ensure    => running,
+  subscribe => File['/etc/foo/foo.conf'].
+}
+````
+
+Before and notify
+
+````
+package { 'foo':
+  ensure => present,
+  before =: File['/etc/foo/foo.conf'],
+}
+file { '/etc/foo/foo.conf':
+  ensure => file,
+  notify => Service['foo'],
+}
+service { 'foo':
+  ensure => running,
+}
+````
+
+Resource chaining
+
+````
+package { 'foo':
+  ensure => present,
+}
+file { '/etc/foo/foo.conf':
+  ensure => file,
+}
+service { 'foo':
+  ensure => running,
+}
+
+Package['foo'] -> File['/etc/foo/foo.conf'] ~> Service['foo']
+````
+
+Or multiline:
+
+````
+Package['foo']
+-> File['/etc/foo/foo.conf']
+~> Service['foo']
 ````
