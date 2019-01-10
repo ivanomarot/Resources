@@ -1,18 +1,17 @@
-Puppet Cheatsheet
----
+# Puppet Cheatsheet
 ***
 
-Overview
+## Overview
 ---
 
 Puppet works on the client-server model. The server is used to distribute information to the nodes to ensure that node configurations are consistent. 
 
 Puppet is a stand alone application. In the events that the nodes lose contact with the master for a longer period of time, they do cache last known good configuration, they will continue to apply configuration until they communicate again with master.
 
-Installation
+## Installation
 ---
 
-Puppet master 
+### Puppet master 
 
 
 Login puppet master host. Add FQDN to /etc/hosts if required.
@@ -22,11 +21,63 @@ vi /etc/hosts
 127.0.0.1 g1scott.mylabserver.com localhost
 ```
 
-Run the installer
+Enable the repository:
 
 ```
-/root/pupper-enterprise-2016.2.1-el-7-x86_64/puppet-enterprise-installer
+sudo rpm -Uvh https://yum.puppet.com/puppet6/puppet6-release-el-7.noarch.rpm
+````
+
+Disable existing service:
+
+````
+service puppetmaster stop
+````
+
+In case Puppet runs over apache:
+
+````
+sudo mv /etc/httpd/conf.d/puppetmaster.conf ~/
+service httpd restart
+````
+
+Install the Puppet server package:
+
+````
+yum install puppetserver
+systemctl start puppetserver
+````
+
+### Puppet Agent
+
+Enable the repository:
+
 ```
+sudo rpm -Uvh https://yum.puppet.com/puppet6/puppet6-release-el-7.noarch.rpm
+````
+
+If necessary, add the path to run the executables:
+
+````
+export PATH=/opt/puppetlabs/bin:$PATH
+````
+
+Install the Puppet agent package:
+
+````
+yum install puppet-agent
+/opt/puppetlabs/bin/puppet resource service puppet ensure=running enable=true
+````
+
+
+### Puppet Enterprise (Web)
+
+Download and extract the executables.
+
+Run the installer
+
+````
+/root/pupper-enterprise-2016.2.1-el-7-x86_64/puppet-enterprise-installer
+````
 
 
 Select the Guided install.
@@ -47,14 +98,13 @@ Install PostgreSQL on the PuppetDB host for me
 [ Deploy Now ]
 
 
-Puppet agent installation:
----
+Aagent installation:
 
 ```
 curl -k https://linux4vuppala2.mylabserver.com:8140/packages/current/install.bash | sudo bash
 ```
 
-Puppet configuration and log files
+##Puppet configuration and log files
 ---
 
 Puppet configuration file:
@@ -111,7 +161,7 @@ Environment config file:
 /etc/puppetlabs/code/environments/production/environment.conf
 ```
 
-Puppet Server
+##Puppet Server
 ---
 
 Manage certificates in Puppet Master:
@@ -125,7 +175,7 @@ puppet cert clean <name> # removes cert
 ```
 
 
-Puppet agent
+##Puppet agent
 ---
 
 Apply a catalog on Puppet agent (bootstrap):
@@ -163,7 +213,7 @@ Show all managed resources
 puppet resource
 ```
 
-Modules
+##Modules
 ---
 
 Print modulepath:
@@ -233,3 +283,49 @@ Template is in: $modulepath/mysql/templates/my.cnf.erb
 source => 'puppet:///modules/mysql/my.cnf'
 File is in: $modulepath/mysql/files/my.cnf
 ```
+
+##Facter
+---
+
+Show all facts
+
+````
+facter   
+````
+
+Show OS Family facter 
+
+````
+facter osfamily 
+````
+
+Show facters in YAML or JSON
+
+````
+facter -y
+facter -j
+````
+
+Get Puppet Enterprise version
+
+````
+facter -p | grep pe_
+````
+
+Get Puppet agent All-in-one version
+
+````
+facter -p | grep aio
+````
+
+Use fact inside a manifest using 'facter' function 
+
+````
+notify { "OS is ${::facts['operatingsystem']}": } 
+````
+
+Use fact inside manifest directly 
+
+````
+notify { "OS is $::operatingsystem": } 
+````
