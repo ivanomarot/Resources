@@ -2,6 +2,64 @@
 
 ## Data Collection
 
+Your application generates a 1 KB JSON payload that needs to be queued and delivered to EC2 instances for applications. At the end of the day, the application needs to replay the data for the past 24 hours. What is the best solution for this?
+
+````
+Kinesis Data Streams
+````
+
+---
+
+You have 3 Kinesis KCL applications that are reading a Kinesis Streams stream and are falling behind. CloudWatch is emitting ProvisionedThroughputExceededException errors on your stream. What corrective active do you need to take to make sure you can use at least 3 KCL applications?
+
+````
+Add more shards to your Kinesis Stream.
+````
+
+---
+
+You work for a start-up that tracks commercial delivery airplanes via GPS. You receive coordinates that are transmitted from each delivery truck once every 6 seconds. You need to process these coordinates in real-time from multiple sources and load them into Elasticsearch without significant technical overhead to maintain. Which tool should you use to digest the data?
+
+````
+Amazon Kinesis Firehose
+````
+
+---
+
+Your client has a web app that emits multiple events to Amazon Kinesis Streams for reporting purposes. Critical events need to be immediately captured before processing can continue, but informational events do not need to delay processing. What solution should your client use to record these types of events withing unnecessarily slowing the application?
+
+````
+Log critical events using the PutRecords API method, and log informational events using the Kinesis Producer Library.
+
+The PutRecords API can be used in code to be synchronous; it will wait for the API request to complete before the application continues. This means you can use it when you need to wait for the critical events to finish logging before continuing. The Kinesis Producer Library is asynchronous and can send many messages withing needing to slow down your application. This makes the KPL ideal for the sending of many non-critical alerts asynchronously.
+````
+
+---
+
+Your company releases new features with high frequency while demanding high application availability. As part of the application's A/B testing, logs from each updated Amazon EC2 instance need to be analyzed in near real-time to ensure that the application is working flawlessly after each deployment. If the logs show any abnormal behavior, then the application version of the instance is changed to a more stable one. Which of the following methods should you use for shipping and analyzing the logs in a highly-available manner?
+
+````
+Ship the logs to an Amazon Kinesis stream and have the consumers analyze the logs in a live manner.
+````
+
+---
+
+Your organization has a variety of different services deployed on EC2 and needs to efficiently send application logs over to a central system for processing and analysis. They've determined it is best to use a managed AWS service to transfer their data from the EC2 instances into Amazon S3 and they've decided to use a solution that will do what?
+
+````
+Leverages the Kinesis Agent to send data to Kinesis Firehose and output that data in S3.
+````
+
+---
+
+Your company has two batch processing applications that consume financial data about the day's stock transactions. Each transaction needs to be stored durably and guarantee that a record of each application is delivered so the audit and billing batch processing applications can process the data. However, the two applications run separately and several hours apart and need access to the same transaction information. After reviewing the transaction information for the day, the information no longer needs to be stored. What is the best way to architect this application?
+
+````
+Use Kinesis to store the transaction information. The billing application will consume data from the stream and the audit application can consume the same data several hours later.
+````
+
+---
+
 You have configured an application that batches up data on the servers before submitting it for intake. Your front-end or application server failed, and now you have lost log data. How can you prevent this from occurring in the future while still ensuring that you will have rapid access to your data from multiple different applications?
 
 ````
@@ -100,6 +158,63 @@ Create an action to send a push notification to all users using Amazon SNS.
 
 ## Data Storage
 
+You are using a MapReduce job to analyze the activation of an item you sell. The job is able to tolerate interruptions and occasional instance termination. The number of activations is usually steady throughout the year, except the week before Christmas, where there is a 20X increase. You need to be sure you have both a solution that will consistently provide low-latency performance and one that will allow you to expand processing power significantly when needed to process the additional data. What is the most cost-effective and performance-optimized solution?
+
+````
+Amazon DynamoDB and Amazon Elastic MapReduce with Spot instances.
+````
+
+---
+
+Your organization needs a data store that can be flexible enough to handle the following requirements and access patterns:
+
+Key-value access pattern
+Complex SQL queries and transactions
+Consistent reads
+Fixed schemas
+
+````
+Amazon RDS
+````
+
+---
+
+What is true about a Global Secondary Index (GSI) on DynamoDB?
+
+````
+The partition key and sort key can be different from the table.
+````
+
+---
+
+Which DynamoDB index can be created after the table is created?
+
+````
+Global Secondary Index
+````
+
+---
+
+A utility company is building an application that stores data coming from more than 10,000 sensors. Each sensor has a unique ID and will send a datapoint (approximately 1 KB) every 10 minutes throughout the day. Each datapoint contains the information coming from the sensor, as well as a timestamp. This company would like to rapidly query information coming from a particular sensor for the past week and delete all of the data that is older than 4 weeks. Using Amazon DynamoDB for its scalability and rapidity, what is the most cost-effective way to implement this?
+
+````
+Use one table for each week with a partition key that is the sensor ID and a sore key that is the timestamp.
+
+A composite key with the sensor ID and timestamp would allow them to look up sensor data within a particular time range. Additionally, limiting the table to a week of data is the most effective method as they do not need to look at data older than a week.
+````
+
+---
+
+Your client has an application that is seeing large spikes in traffic on weekends. During those spikes, several of the biggest customers of the client periodically report being unable to load their data. The application in question is a Vue.js with a frontend hosted on S3, an API Gateway, and has Lambda powered APIs and a DynamoDB data store. When testing the issue, you discover that smaller clients appear to be able to access data fine even during these spikes. What is the most cost-efficient way to resolve the issue?
+
+````
+Review the DynamoDB partition keys and determine how you can efficiently randomize them. Then, if necessary, increase read capacity units
+
+Because only a single client sees this issue, it is likely that a table behind the scenes uses some sort of customer_id to partition data. Because DynamoDB tables initially distribute capacity equally between partitions, this sort of error may occur for larger customers.
+````
+
+---
+
 An application requires a highly available relational database with an initial storage capacity of 8 TB. The database will grow by 8 GB every day. To support expected traffic, at least eight read replicas will be required to handle database reads. With what service could you meet these requirements?
 
 ````
@@ -191,6 +306,49 @@ Compress the file using gz compression.
 ````
 
 ## Data Processing
+
+A large stuffed-animal maker is growing rapidly and constantly adding new animals to their product line. The COO wants to know customers reaction to each new animal, wants to ensure that their customers are enjoying the products, and use this information for future product ideas. The social media manager is tasked with capturing the feedback. After the data is ingested, the company wants to be able to analyze and classify the data in a cost-effective and practical way. A data scientist says she has already created an effective ML model in AWS for use if needed. How do you do this? (Choose all that apply)
+
+````
+Create Amazon Kinesis Streams and use one Kinesis stream to copy the raw data to Amazon S3. For long term analysis and historical reference, raw data is stored in Amazon S3.
+Use Lambda for processing and normalizing the data and requesting predictions from Amazon ML. Data is sent to Amazon SNS using Lambda, and delivered via email for further investigation.
+````
+
+---
+
+You need to store and process data quickly in a cost-effective manner. You can move data easily from its location on disk to wherever you'd like without needing to stream the data. Also, you do not know how much data you will be handling in 6 months, and your processing needs spike intermittently. Specifically, you need to transform the data that comes in by aggregating the different disparate metrics into summary information. Which Big Data tools should you use?
+
+````
+S3 and Spark on EMR
+````
+
+---
+
+You get daily dumps of transaction data into S3 which is batch processed into EMR on a nightly basis. The size of the data spikes up and down regularly. What can be done to reduce the processing time?
+
+````
+Add task nodes using "based on CPU" metrics from Ganglia
+````
+
+---
+
+Your EMR cluster uses 12 m4.large instances and runs 24 hours per day, but it is only used for processing and reporting during business hours. Which options can you use to reduce the costs?
+
+````
+Use Spot instances for task nodes when needed.
+Migrate the data from HDFS to S3 using S3DistCp and turn off the cluster when not in use.
+````
+
+---
+
+You have advertising campaign information stored in a DynamoDB table. You need to write queries that join clickstream data to identify the most effective categories of ads that are displayed on websites. You also need to support data continuing to be streamed into the table. Which Big Data tools should you use? (Choose all that apply)
+
+````
+Kinesis Data Streams
+EMR
+````
+
+---
 
 Your steaming application requires only-once delivery and out-of-order data is acceptable as long as the data is processed within 5 seconds. Which solution can be used?
 
@@ -293,6 +451,45 @@ HBase on HDFS
 
 ## Data Analysis
 
+Your supervisor has asked you to provision Amazon Athena for data analysis. How should you provision this?
+
+````
+Athena is serverless, so there is no infrastructure to set up or manage; you can start analyzing data immediately. You don’t even need to load your data into Athena; it works directly with data stored in S3
+````
+
+---
+
+Your company recently purchased five different companies that run different backend databases that include Redshift, MySQL, Hive on EMR, and PostgreSQL. You need a single tool that can run queries on all the different platforms for your daily ad-hoc analysis. Additionally, you'll soon be developing new applications that require you to stream web application data in from multiple producers. Which tools enable you to do that?
+
+````
+Use Amazon Kinesis to collect the data, use Kinesis Analytics for real-time analytics, and save the data in Redshift for trend analysis
+````
+
+---
+
+You need real-time reporting on logs that are being generated from your applications. In addition, you need anomaly detection. The processing latency needs to be one second or less. Which option would you choose if your team has no experience with Machine learning libraries and doesn't want to have to maintain any software installations yourself?
+
+````
+Kinesis Streams with Kinesis Analytics
+````
+
+---
+
+You have a Redshift table that you are designing called 'item_description' that contains 3MB of data, and you will use it frequently in joins. The table itself isn't frequently updated. What DISTSTYLE for the table will optimize queries?
+
+````
+Change the DISTSTYLE to ALL
+````
+
+---
+
+Your company needs to collect data from multiple Amazon Redshift clusters and consolidate the data into a single central data warehouse. Data must be encrypted in flight and at rest. How can you build this data collection process out in a way that will scale?
+
+````
+Use AWS KMS data key to run an UNLOAD ENCRYPTED command that stores the data in an unencrypted S3 bucket; run a COPY command to move the data into the target cluster.
+````
+
+---
 
 A new client is requesting a tool that will provide fast query performance for enterprise reporting and business intelligence workloads, particularly those involving extremely complex SQL with multiple joins and sub-queries. They also want the ability to give analysts access to a central system through tradition SQL clients that allow them to easily explore and familiarize themselves with the data. What solution do you initially recommend they investigate?
 
@@ -391,6 +588,16 @@ Copy the data to S3 and use COPY to move the data into Redshift.
 
 ## Data Visualization
 
+Your company recently purchased five different companies that run different backend databases that include Redshift, MySQL, Hive on EMR and PostgreSQL. You need a single tool that can run queries on all the different platform for your daily ad-hoc analysis. Which tools enable you to do that?
+
+````
+Presto
+
+A single Presto query can process data from multiple sources.
+````
+
+---
+
 You've been asked by the VP of People to showcase the current breakdown of the headcount for each department within your organization. What chart do you select to do this in order to make it easy to compare each department?
 
 ````
@@ -484,6 +691,34 @@ Line Chart
 ---
 
 ## Security
+
+You're launching a test Elasticsearch cluster with the Amazon Elasticsearch Service, and you'd like to restrict access to only your office desktop computer that you occasionally share with an intern to allow her to get more experience interacting with Elasticsearch. What's the easiest way to do this?
+
+````
+Create an IP-based resource policy on the Elasticsearch cluster that allows access to requests coming from the IP of the machine.
+````
+
+---
+
+Your data analytics team needs to load data into Redshift from S3. Currently, company policy restricts AWS user accounts to developers and not your data engineers. Instead, they each have different Redshift user accounts with access to the cluster. How do you empower them to do their jobs?
+
+````
+You should create an IAM role and attach it to the cluster and make sure it can be used by the specific team members you would like to use it.
+
+Redshift's COPY commands require some form of authorization to copy the data into a Redshift table from S3. This solution would allow the Redshift users (not IAM users) to have the proper permissions.
+````
+
+---
+
+Your company needs to design a data warehouse for a client in the retail industry. The data warehose will store historic purchases in Amazon Redshift. To comply with PCI:DSS requirements and meet data protection standards, the data must be encrypted at rest and have keys are managed by a corporate on-premises HSM. How can you meet these requirements in a cost-effective manner?
+
+````
+Create a VPN connection between a VPC you create in AWS and an on-premises network. Then launch the Redshift cluster in the VPC, and configure it to use your corporate HSM.
+
+Redshift can leverage on-premises HSMs for key management using VPN. This meets the requirements by making sure the encryption keys are locally managed
+````
+
+---
 
 Your company stores very sensitive data on Redshift, which needs to be encrypted with keys that are fully controlled by your company. Which option should you use?
 
